@@ -784,7 +784,6 @@ class VmbDali(Module):
 
     async def _load_default_channels(self) -> None:
         for chan in range(1, 64 + 1):
-            print(chan)
             self._channels[chan] = Channel(
                 self, chan, "placeholder", True, self._writer, self._address
             )
