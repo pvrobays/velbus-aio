@@ -10,7 +10,6 @@ import json
 import logging
 import os
 import pathlib
-import threading
 from typing import TYPE_CHECKING, Awaitable, Callable
 
 import pkg_resources
@@ -45,7 +44,7 @@ class PacketHandler:
         self._log.setLevel(logging.DEBUG)
         self._velbus = velbus
         self._typeResponseReceived = asyncio.Event()
-        self._scanLock = threading.Lock()
+        self._scanLock = asyncio.Lock()
         self._modulescan_address = 0
         self._scan_complete = False
         self._scan_delay_msec = 0
@@ -83,7 +82,7 @@ class PacketHandler:
         while self._modulescan_address < 254:
             address = 0
             module = None
-            with self._scanLock:
+            async with self._scanLock:
                 self._modulescan_address = self._modulescan_address + 1
                 address = self._modulescan_address
                 module = self._velbus.get_module(address)
@@ -106,7 +105,7 @@ class PacketHandler:
                         self._typeResponseReceived.wait(),
                         SCAN_MODULETYPE_TIMEOUT / 1000.0,
                     )
-                    with self._scanLock:
+                    async with self._scanLock:
                         module = self._velbus.get_module(address)
                 except asyncio.TimeoutError:
                     self._log.info(
@@ -158,7 +157,7 @@ class PacketHandler:
             if not self._scan_complete:
                 tmsg: ModuleTypeMessage = ModuleTypeMessage()
                 tmsg.populate(priority, address, rtr, data)
-                with self._scanLock:
+                async with self._scanLock:
                     await self._handle_module_type(tmsg)
                     if address == self._modulescan_address:
                         self._typeResponseReceived.set()
@@ -181,7 +180,7 @@ class PacketHandler:
                     msg.sub_address_offset = 4
                 elif command_value == 0xA6:
                     msg.sub_address_offset = 8
-                with self._scanLock:
+                async with self._scanLock:
                     self._scan_delay_msec = SCAN_MODULEINFO_TIMEOUT_INITIAL
                     self._handle_module_subtype(msg)
 
@@ -196,7 +195,7 @@ class PacketHandler:
         # handle other messages for modules that are already scanned
         else:
             module = None
-            with self._scanLock:
+            async with self._scanLock:
                 module = self._velbus.get_module(address)
             if module is not None:
                 module_type = module.get_type()
