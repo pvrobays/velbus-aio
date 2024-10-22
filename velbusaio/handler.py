@@ -159,7 +159,7 @@ class PacketHandler:
                 tmsg: ModuleTypeMessage = ModuleTypeMessage()
                 tmsg.populate(priority, address, rtr, data)
                 with self._scanLock:
-                    self._handle_module_type(tmsg)
+                    await self._handle_module_type(tmsg)
                     if address == self._modulescan_address:
                         self._typeResponseReceived.set()
                     else:
@@ -222,7 +222,9 @@ class PacketHandler:
                 else:
                     self._log.warning(f"NOT FOUND IN command_registry: {rawmsg}")
 
-    def _handle_module_type(self, msg: ModuleTypeMessage | ModuleType2Message) -> None:
+    async def _handle_module_type(
+        self, msg: ModuleTypeMessage | ModuleType2Message
+    ) -> None:
         """
         load the module data
         """
@@ -230,10 +232,10 @@ class PacketHandler:
             module = self._velbus.get_module(msg.address)
             if module is None:
                 # data = keys_exists(self.pdata, "ModuleTypes", h2(msg.module_type))
-                if not data:
-                    self._log.warning(f"Module not recognized: {msg.module_type}")
-                    return
-                self._velbus.add_module(
+                # if not data:
+                #    self._log.warning(f"Module not recognized: {msg.module_type}")
+                #    return
+                await self._velbus.add_module(
                     msg.address,
                     msg.module_type,
                     memorymap=msg.memory_map_version,

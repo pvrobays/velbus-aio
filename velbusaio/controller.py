@@ -67,7 +67,7 @@ class Velbus:
             self._log.debug("Reconnecting to transport")
             asyncio.ensure_future(self.connect())
 
-    def add_module(
+    async def add_module(
         self,
         addr: int,
         typ: int,
@@ -86,7 +86,7 @@ class Velbus:
             memorymap=memorymap,
             cache_dir=self._cache_dir,
         )
-        module.initialize(self.send)
+        await module.initialize(self.send)
         self._modules[addr] = module
         self._log.info(f"Found module {addr}: {module}")
 

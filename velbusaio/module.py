@@ -12,6 +12,7 @@ import struct
 import sys
 from typing import Awaitable, Callable
 
+import pkg_resources
 from aiofile import async_open
 
 from velbusaio.channels import (
@@ -38,7 +39,7 @@ from velbusaio.const import (
     CHANNEL_SELECTED_PROGRAM,
     PRIORITY_LOW,
 )
-from velbusaio.helpers import handle_match, keys_exists
+from velbusaio.helpers import h2, handle_match, keys_exists
 from velbusaio.message import Message
 from velbusaio.messages.blind_status import BlindStatusMessage, BlindStatusNgMessage
 from velbusaio.messages.channel_name_part1 import (
@@ -143,7 +144,7 @@ class Module:
         cache_dir: str | None = None,
     ) -> None:
         self._address = module_address
-        self._type = module_type
+        self._type = int(module_type)
         self._data = {}
 
         self._name = {}
@@ -157,13 +158,20 @@ class Module:
         self._channels = {}
         self.loaded = False
 
-    def initialize(self, writer: Callable[[Message], Awaitable[None]]) -> None:
+    async def initialize(self, writer: Callable[[Message], Awaitable[None]]) -> None:
         self._log = logging.getLogger("velbus-module")
-        # laod the protocol data
-        async with async_open(
-            pkg_resources.resource_filename(__name__, f"module_spec/{self._type}.json")
-        ) as protocol_file:
-            self._data = json.loads(await protocol_file.read())
+        # load the protocol data
+        try:
+            async with async_open(
+                pkg_resources.resource_filename(
+                    __name__, f"module_spec/{h2(self._type)}.json"
+                )
+            ) as protocol_file:
+                self._data = json.loads(await protocol_file.read())
+            self._log.debug(f"Module spec {h2(self._type)} loaded")
+        except FileNotFoundError:
+            self._log.warning(f"No module spec for {h2(self._type)}")
+            self._data = {}
 
         # set some params from the velbus controller
         self._writer = writer
