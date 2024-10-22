@@ -16,7 +16,6 @@ from velbusaio.const import (
     PRIORITY_LOW,
 )
 from velbusaio.controller import Velbus
-from velbusaio.handler import PacketHandler
 from velbusaio.helpers import get_cache_dir
 from velbusaio.messages.module_status import (
     PROGRAM_SELECTION,
@@ -53,16 +52,13 @@ async def test_module_status_selected_program(module_type):
     pathlib.Path(cache_dir).mkdir(parents=True, exist_ok=True)
 
     velbus = MagicMock()
-    ph = PacketHandler(velbus)
-    await ph.read_protocol_data()
     m = Module(
         module_address,
         module_type,
-        ph.pdata["ModuleTypes"][f"{module_type:02X}"],
         cache_dir=get_cache_dir(),
     )
     velbus = Velbus("")  # Dummy connection
-    m.initialize(velbus.send)
+    await m.initialize(velbus.send)
 
     # load the module with dummy channels
     for chan in range(1, 9):

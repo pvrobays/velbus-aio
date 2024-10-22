@@ -3,9 +3,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from velbusaio.handler import PacketHandler
 from velbusaio.messages.memory_data import MemoryDataMessage
 from velbusaio.module import Module
+
+
+class MockWriter:
+    async def __call__(self, data):
+        pass
 
 
 @pytest.mark.asyncio
@@ -26,12 +30,8 @@ async def test_module_name(name):
     for i, c in enumerate(name):
         memory[0xF0 + i] = ord(c)
 
-    velbus = MagicMock()
-    ph = PacketHandler(velbus)
-    await ph.read_protocol_data()
-    m = Module(
-        module_address, module_type, ph.pdata["ModuleTypes"][f"{module_type:02X}"]
-    )
+    m = Module(module_address, module_type)
+    await m.initialize(MockWriter())
     m._log = logging.getLogger("velbus-module")
 
     for addr, data in memory.items():
@@ -40,5 +40,6 @@ async def test_module_name(name):
         msg.low_address = addr & 0xFF
         msg.data = data
         await m._process_memory_data_message(msg)
+        print(m)
 
     assert m.get_name() == name
