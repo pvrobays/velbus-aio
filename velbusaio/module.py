@@ -38,6 +38,7 @@ from velbusaio.const import (
     CHANNEL_MEMO_TEXT,
     CHANNEL_SELECTED_PROGRAM,
     PRIORITY_LOW,
+    SCAN_MODULEINFO_TIMEOUT_INITIAL,
 )
 from velbusaio.helpers import h2, handle_match, keys_exists
 from velbusaio.message import Message
@@ -157,6 +158,9 @@ class Module:
         self._is_loading = False
         self._channels = {}
         self.loaded = False
+
+    def get_initial_timeout(self) -> int:
+        return SCAN_MODULEINFO_TIMEOUT_INITIAL
 
     async def initialize(self, writer: Callable[[Message], Awaitable[None]]) -> None:
         self._log = logging.getLogger("velbus-module")
@@ -781,6 +785,9 @@ class VmbDali(Module):
             cache_dir,
         )
         self.group_members: dict[int, set[int]] = {}
+
+    def get_initial_timeout(self) -> int:
+        return 100000
 
     async def _load_default_channels(self) -> None:
         for chan in range(1, 64 + 1):

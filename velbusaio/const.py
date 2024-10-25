@@ -40,7 +40,7 @@ NO_RTR: Final = 0x00
 CACHEDIR: Final = ".velbuscache"
 
 # Module scan timeout values (in mSec)
-SCAN_MODULETYPE_TIMEOUT: Final = 2000  # time to wait for ModuleTypeRequest
+SCAN_MODULETYPE_TIMEOUT: Final = 3000  # time to wait for ModuleTypeRequest
 SCAN_MODULEINFO_TIMEOUT_INITIAL: Final = 1000  # time to wait for first info (status)
 SCAN_MODULEINFO_TIMEOUT_INTERVAL: Final = (
     150  # time to wait for info interval (between next message)

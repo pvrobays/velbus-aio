@@ -100,6 +100,10 @@ class Velbus:
             self._modules[sub_addr] = module
         module.cleanupSubChannels()
 
+    def addr_is_submodule(self, addr: int) -> bool:
+        """Check if an address is a submodule."""
+        return addr in self._submodules
+
     def get_modules(self) -> dict:
         """Return the module cache."""
         return self._modules

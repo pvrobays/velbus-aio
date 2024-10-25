@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import pathlib
+import pprint
 from typing import TYPE_CHECKING, Awaitable, Callable
 
 import pkg_resources
@@ -85,6 +86,11 @@ class PacketHandler:
             async with self._scanLock:
                 self._modulescan_address = self._modulescan_address + 1
                 address = self._modulescan_address
+                if self._velbus.addr_is_submodule(address):
+                    self._log.info(
+                        f"Skipping submodule address {address}, already handled"
+                    )
+                    continue
                 module = self._velbus.get_module(address)
 
             self._log.info(f"Starting handling scan {address}")
@@ -113,17 +119,19 @@ class PacketHandler:
                     )
                 if module is not None:
                     try:
-                        self._log.debug(f"Module {address} detected: start loading")
+                        self._log.debug(
+                            f"Module {module._address} detected: start loading"
+                        )
                         await asyncio.wait_for(
                             module.load(from_cache=True),
                             SCAN_MODULEINFO_TIMEOUT_INITIAL / 1000.0,
                         )
-                        self._scan_delay_msec = SCAN_MODULEINFO_TIMEOUT_INITIAL
+                        self._scan_delay_msec = module.get_initial_timeout()
                         while (
                             self._scan_delay_msec > 50 and not await module.is_loaded()
                         ):
                             # self._log.debug(
-                            #    f"\t... waiting {self._scan_delay_msec} is_loaded={module.is_loaded()}"
+                            #    f"\t... waiting {self._scan_delay_msec} is_loaded={await module.is_loaded()}"
                             # )
                             self._scan_delay_msec = self._scan_delay_msec - 50
                             await asyncio.sleep(0.05)
@@ -153,36 +161,34 @@ class PacketHandler:
         data = rawmsg.data_only
 
         # handle module type response message
-        if command_value == 0xFF:
-            if not self._scan_complete:
-                tmsg: ModuleTypeMessage = ModuleTypeMessage()
-                tmsg.populate(priority, address, rtr, data)
-                async with self._scanLock:
-                    await self._handle_module_type(tmsg)
-                    if address == self._modulescan_address:
-                        self._typeResponseReceived.set()
-                    else:
-                        self._log.debug(
-                            f"Unexpected module type message module address {address}, Velbuslink scan?"
-                        )
-                        self._modulescan_address = address - 1
+        if command_value == 0xFF and not self._scan_complete:
+            tmsg: ModuleTypeMessage = ModuleTypeMessage()
+            tmsg.populate(priority, address, rtr, data)
+            async with self._scanLock:
+                await self._handle_module_type(tmsg)
+                if address == self._modulescan_address:
+                    self._typeResponseReceived.set()
+                else:
+                    self._log.debug(
+                        f"Unexpected module type message module address {address}, Velbuslink scan?"
+                    )
+                    self._modulescan_address = address - 1
 
-                self._typeResponseReceived.set()
+            self._typeResponseReceived.set()
 
         # handle module subtype response message
-        elif command_value in (0xB0, 0xA7, 0xA6):
-            if not self._scan_complete:
-                msg: ModuleSubTypeMessage = ModuleSubTypeMessage()
-                msg.populate(priority, address, rtr, data)
-                if command_value == 0xB0:
-                    msg.sub_address_offset = 0
-                elif command_value == 0xA7:
-                    msg.sub_address_offset = 4
-                elif command_value == 0xA6:
-                    msg.sub_address_offset = 8
-                async with self._scanLock:
-                    self._scan_delay_msec = SCAN_MODULEINFO_TIMEOUT_INITIAL
-                    self._handle_module_subtype(msg)
+        elif command_value in (0xB0, 0xA7, 0xA6) and not self._scan_complete:
+            msg: ModuleSubTypeMessage = ModuleSubTypeMessage()
+            msg.populate(priority, address, rtr, data)
+            if command_value == 0xB0:
+                msg.sub_address_offset = 0
+            elif command_value == 0xA7:
+                msg.sub_address_offset = 4
+            elif command_value == 0xA6:
+                msg.sub_address_offset = 8
+            async with self._scanLock:
+                self._scan_delay_msec += SCAN_MODULEINFO_TIMEOUT_INTERVAL
+                self._handle_module_subtype(msg)
 
         # ignore broadcast
         elif command_value in self.broadcast:
@@ -214,7 +220,7 @@ class PacketHandler:
                         0xFE,
                         0xCC,
                     ):  # names, memory data, memory block
-                        self._scan_delay_msec = SCAN_MODULEINFO_TIMEOUT_INTERVAL
+                        self._scan_delay_msec += SCAN_MODULEINFO_TIMEOUT_INTERVAL
                         # self._log.debug(f"Restart timeout {msg}")
                     # send the message to the modules
                     await module.on_message(msg)
