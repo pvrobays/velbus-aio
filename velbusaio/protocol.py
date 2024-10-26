@@ -212,7 +212,7 @@ class VelbusProtocol(asyncio.BufferedProtocol):
         on_backoff=_on_write_backoff,
     )
     async def _write_message(self, msg: RawMessage) -> bool:
-        # self._log.debug(f"TX: {msg}")
+        self._log.debug(f"TX: {msg}")
         if not self.transport.is_closing():
             self.transport.write(msg.to_bytes())
             return True

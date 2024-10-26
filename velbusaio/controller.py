@@ -34,6 +34,7 @@ class Velbus:
         self,
         dsn: str,
         cache_dir: str = get_cache_dir(),
+        one_address: int | None = None,
     ) -> None:
         """Init the Velbus controller."""
         self._log = logging.getLogger("velbus")
@@ -46,7 +47,7 @@ class Velbus:
         self._auto_reconnect = True
 
         self._dsn = dsn
-        self._handler = PacketHandler(self)
+        self._handler = PacketHandler(self, one_address)
         self._modules: dict[int, Module] = {}
         self._submodules: list[int] = []
         self._send_queue: asyncio.Queue = asyncio.Queue()

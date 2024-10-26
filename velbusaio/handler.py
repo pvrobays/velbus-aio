@@ -40,10 +40,12 @@ class PacketHandler:
     def __init__(
         self,
         velbus: Velbus,
+        one_address: int | None = None,
     ) -> None:
         self._log = logging.getLogger("velbus-handler")
         self._log.setLevel(logging.DEBUG)
         self._velbus = velbus
+        self._one_address = one_address
         self._typeResponseReceived = asyncio.Event()
         self._scanLock = asyncio.Lock()
         self._modulescan_address = 0
@@ -91,9 +93,14 @@ class PacketHandler:
                         f"Skipping submodule address {address}, already handled"
                     )
                     continue
+                self._log.info(f"Starting handling scan {address}")
                 module = self._velbus.get_module(address)
 
-            self._log.info(f"Starting handling scan {address}")
+            if self._one_address is not None and address != int(self._one_address):
+                self._log.info(
+                    f"Skipping address {address} as we requested to only scan one address {self._one_address}"
+                )
+                continue
 
             cfile = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
             # cleanup the old module cache if needed
