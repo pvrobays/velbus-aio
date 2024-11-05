@@ -1,5 +1,12 @@
 ![CI](https://github.com/Cereal2nd/velbus-aio/actions/workflows/main.yml/badge.svg)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/Cereal2nd/velbus-aio/master.svg)](https://results.pre-commit.ci/latest/github/Cereal2nd/velbus-aio/master)
+[![PyPI version](https://badge.fury.io/py/velbus-aio.svg)](https://badge.fury.io/py/velbus-aio)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/velbus-aio.svg)](https://github.com/Cereal2nd/velbus-aio)
+[![License](https://img.shields.io/github/license/Cereal2nd/velbus-aio)](
+[![Downloads](https://pepy.tech/badge/velbus-aio)](https://pepy.tech/project/velbus-aio)
+[![Downloads](https://pepy.tech/badge/velbus-aio/month)](https://pepy.tech/project/velbus-aio)
+[![Downloads](https://pepy.tech/badge/velbus-aio/week)](https://pepy.tech/project/velbus-aio)
+[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 > This project requires financial support, but it is free for you to use. You can join those helping to keep the lights on at:
 >
