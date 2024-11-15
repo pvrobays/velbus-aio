@@ -74,6 +74,7 @@ MODULE_DIRECTORY = {
     0x4B: "VMB8DC-20",
     0x4C: "VMB6PB-20",
     0x4D: "VMBPIR-20",
+    0x4E: "VMB8IN-20",
     0x4F: "VMBEL1-20",
     0x50: "VMBEL2-20",
     0x51: "VMBEL4-20",
