@@ -218,7 +218,36 @@ class Velbus:
             )
         )
 
-    def get_all(
+    def get_all_sensor(
+        self,
+    ) -> list[ButtonCounter | Temperature | LightSensor | SensorNumber]:
+        return self._get_all("sensor")
+
+    def get_all_switch(self) -> list[Relay]:
+        return self._get_all("switch")
+
+    def get_all_binary_sensor(self) -> list[Button]:
+        return self._get_all("binary_sensor")
+
+    def get_all_button(self) -> list[Button | ButtonCounter]:
+        return self._get_all("button")
+
+    def get_all_climate(self) -> list[Temperature]:
+        return self._get_all("climate")
+
+    def get_all_cover(self) -> list[Blind]:
+        return self._get_all("cover")
+
+    def get_all_select(self) -> list[SelectedProgram]:
+        return self._get_all("select")
+
+    def get_all_light(self) -> list[Dimmer]:
+        return self._get_all("light")
+
+    def get_all_led(self) -> list[Button]:
+        return self._get_all("led")
+
+    def _get_all(
         self, class_name: str
     ) -> list[
         Blind
