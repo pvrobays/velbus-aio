@@ -17,6 +17,7 @@ args = parser.parse_args()
 async def main(connect_str: str):
     velbus = Velbus(connect_str)
     await velbus.connect()
+    await velbus.start()
     for mod in (velbus.get_modules()).values():
         print(mod)
         print("")

@@ -142,10 +142,9 @@ class Velbus:
         self._auto_reconnect = False
         self._protocol.close()
 
-    async def connect(self, test_connect: bool = False) -> None:
+    async def connect(self) -> None:
         """Connect to the bus and load all the data."""
         await self._handler.read_protocol_data()
-        auth = None
         # connect to the bus
         if ":" in self._dsn:
             # tcp/ip combination
@@ -157,8 +156,6 @@ class Velbus:
                 ctx = ssl._create_unverified_context()
             else:
                 ctx = None
-            if parts.username:
-                auth = parts.username
             try:
                 (
                     _transport,
@@ -190,12 +187,12 @@ class Velbus:
                 )
             except (FileNotFoundError, serial.SerialException) as err:
                 raise VelbusConnectionFailed from err
-        if test_connect:
-            return
-        # if auth is required send the auth key
-        if auth:
-            await self._protocol.write_auth_key(auth)
 
+    async def start(self) -> None:
+        # if auth is required send the auth key
+        parts = urlparse(self._dsn)
+        if parts.username:
+            await self._protocol.write_auth_key(parts.username)
         # scan the bus
         await self._handler.scan()
 
