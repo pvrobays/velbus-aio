@@ -197,6 +197,9 @@ class Channel:
     def on_status_update(self, meth: Callable[[], Awaitable[None]]) -> None:
         self._on_status_update.append(meth)
 
+    def remove_on_status_update(self, meth: Callable[[], Awaitable[None]]) -> None:
+        self._on_status_update.remove(meth)
+
     def get_counter_state(self) -> int:
         raise NotImplementedError()
 
