@@ -221,7 +221,7 @@
       "Type": "Memo"
     }
   },
-  "Info": "VMBELO-20 Edge-lit touch panel with Oled",
+  "Info": "VMBELO Edge-lit touch panel with Oled",
   "Memory": {
     "Address": {
       "0F44": { "ModuleName": "0:Start" },
