@@ -380,6 +380,7 @@
     },
     "ModuleName": "0FA8-0FE7"
   },
+  "TemperatureChannel": "33",
   "ThermostatAddr": "3",
   "Type": "VMBELO-20"
 }
