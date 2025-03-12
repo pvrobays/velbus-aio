@@ -247,195 +247,79 @@
       "03EB": {
         "ModuleName": "64:Save"
       },
-      "02EA": {
+      "03FE": {
         "Match": {
-          "0": {
-            "Value": "reserved",
-            "Channel": "01",
-            "SubName": "Unit"
-          },
           "1": {
-            "Value": "liter",
-            "Channel": "01",
-            "SubName": "Unit"
+            "%......00": {
+              "Value": "reserved"
+            },
+            "%......01": {
+              "Value": "liter"
+            },
+            "%......10": {
+              "Value": "m3"
+            },
+            "%......11": {
+              "Value": "kWh"
+            },
+            "%......[01][01]": {
+              "Channel": "01",
+              "SubName": "Unit"
+            }
           },
           "2": {
-            "Value": "m3",
-            "Channel": "01",
-            "SubName": "Unit"
+            "%....00..": {
+              "Value": "reserved"
+            },
+            "%....01..": {
+              "Value": "liter"
+            },
+            "%....10..": {
+              "Value": "m3"
+            },
+            "%....11..": {
+              "Value": "kWh"
+            },
+            "%....[01][01]..": {
+              "Channel": "02",
+              "SubName": "Unit"
+            }
           },
           "3": {
-            "Value": "kWh",
-            "Channel": "01",
-            "SubName": "Unit"
-          }
-        }
-      },
-      "02EE": {
-        "Match": {
-          "0": {
-            "Value": "reserved",
-            "Channel": "02",
-            "SubName": "Unit"
+            "%..00....": {
+              "Value": "reserved"
+            },
+            "%..01....": {
+              "Value": "liter"
+            },
+            "%..10....": {
+              "Value": "m3"
+            },
+            "%..11....": {
+              "Value": "kWh"
+            },
+            "%..[01][01]....": {
+              "Channel": "03",
+              "SubName": "Unit"
+            }
           },
-          "1": {
-            "Value": "liter",
-            "Channel": "02",
-            "SubName": "Unit"
-          },
-          "2": {
-            "Value": "m3",
-            "Channel": "02",
-            "SubName": "Unit"
-          },
-          "3": {
-            "Value": "kWh",
-            "Channel": "02",
-            "SubName": "Unit"
-          }
-        }
-      },
-      "02F2": {
-        "Match": {
-          "0": {
-            "Value": "reserved",
-            "Channel": "03",
-            "SubName": "Unit"
-          },
-          "1": {
-            "Value": "liter",
-            "Channel": "03",
-            "SubName": "Unit"
-          },
-          "2": {
-            "Value": "m3",
-            "Channel": "03",
-            "SubName": "Unit"
-          },
-          "3": {
-            "Value": "kWh",
-            "Channel": "03",
-            "SubName": "Unit"
-          }
-        }
-      },
-      "02F6": {
-        "Match": {
-          "0": {
-            "Value": "reserved",
-            "Channel": "04",
-            "SubName": "Unit"
-          },
-          "1": {
-            "Value": "liter",
-            "Channel": "04",
-            "SubName": "Unit"
-          },
-          "2": {
-            "Value": "m3",
-            "Channel": "04",
-            "SubName": "Unit"
-          },
-          "3": {
-            "Value": "kWh",
-            "Channel": "04",
-            "SubName": "Unit"
-          }
-        }
-      },
-      "02FA": {
-        "Match": {
-          "0": {
-            "Value": "reserved",
-            "Channel": "05",
-            "SubName": "Unit"
-          },
-          "1": {
-            "Value": "liter",
-            "Channel": "05",
-            "SubName": "Unit"
-          },
-          "2": {
-            "Value": "m3",
-            "Channel": "05",
-            "SubName": "Unit"
-          },
-          "3": {
-            "Value": "kWh",
-            "Channel": "05",
-            "SubName": "Unit"
-          }
-        }
-      },
-      "02FE": {
-        "Match": {
-          "0": {
-            "Value": "reserved",
-            "Channel": "06",
-            "SubName": "Unit"
-          },
-          "1": {
-            "Value": "liter",
-            "Channel": "06",
-            "SubName": "Unit"
-          },
-          "2": {
-            "Value": "m3",
-            "Channel": "06",
-            "SubName": "Unit"
-          },
-          "3": {
-            "Value": "kWh",
-            "Channel": "06",
-            "SubName": "Unit"
-          }
-        }
-      },
-      "0302": {
-        "Match": {
-          "0": {
-            "Value": "reserved",
-            "Channel": "07",
-            "SubName": "Unit"
-          },
-          "1": {
-            "Value": "liter",
-            "Channel": "07",
-            "SubName": "Unit"
-          },
-          "2": {
-            "Value": "m3",
-            "Channel": "07",
-            "SubName": "Unit"
-          },
-          "3": {
-            "Value": "kWh",
-            "Channel": "07",
-            "SubName": "Unit"
-          }
-        }
-      },
-      "0306": {
-        "Match": {
-          "0": {
-            "Value": "reserved",
-            "Channel": "08",
-            "SubName": "Unit"
-          },
-          "1": {
-            "Value": "liter",
-            "Channel": "08",
-            "SubName": "Unit"
-          },
-          "2": {
-            "Value": "m3",
-            "Channel": "08",
-            "SubName": "Unit"
-          },
-          "3": {
-            "Value": "kWh",
-            "Channel": "08",
-            "SubName": "Unit"
+          "4": {
+            "%00......": {
+              "Value": "reserved"
+            },
+            "%01......": {
+              "Value": "liter"
+            },
+            "%10......": {
+              "Value": "m3"
+            },
+            "%11......": {
+              "Value": "kWh"
+            },
+            "%[01][01]......": {
+              "Channel": "04",
+              "SubName": "Unit"
+            }
           }
         }
       }
