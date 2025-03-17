@@ -33,6 +33,7 @@ from velbusaio.messages.channel_name_request import (
 from velbusaio.messages.clear_led import ClearLedMessage
 from velbusaio.messages.counter_status import CounterStatusMessage
 from velbusaio.messages.counter_status_request import CounterStatusRequestMessage
+from velbusaio.messages.counter_value import CounterValueMessage
 from velbusaio.messages.cover_down import CoverDownMessage, CoverDownMessage2
 from velbusaio.messages.cover_off import CoverOffMessage, CoverOffMessage2
 from velbusaio.messages.cover_position import CoverPosMessage
