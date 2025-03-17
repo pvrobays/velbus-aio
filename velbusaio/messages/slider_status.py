@@ -12,7 +12,16 @@ COMMAND_CODE = 0x0F
 
 @register(
     COMMAND_CODE,
-    ["VMB1DM", "VMBDME", "VMB4DC", "VMBDMI", "VMBDMI-R", "VMB1LED", "VMB8DC-20"],
+    [
+        "VMB1DM",
+        "VMBDME",
+        "VMB4DC",
+        "VMBDMI",
+        "VMBDMI-R",
+        "VMB1LED",
+        "VMB8DC-20",
+        "VMB4LEDPWM-20",
+    ],
 )
 class SliderStatusMessage(Message):
     """

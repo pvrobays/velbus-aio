@@ -12,7 +12,16 @@ COMMAND_CODE = 0x11
 
 @register(
     COMMAND_CODE,
-    ["VMB1DM", "VMBDME", "VMBDMI-R", "VMBDMI", "VMB1LED", "VMB4DC", "VMB8DC-20"],
+    [
+        "VMB1DM",
+        "VMBDME",
+        "VMBDMI-R",
+        "VMBDMI",
+        "VMB1LED",
+        "VMB4DC",
+        "VMB8DC-20",
+        "VMB4LEDPWM-20",
+    ],
 )
 class RestoreDimmerMessage(Message):
     """

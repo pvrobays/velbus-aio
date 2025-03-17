@@ -87,6 +87,7 @@ class ModuleStatusMessage(Message):
         "VMBGPO-20",
         "VMBEL4PIR-20",
         "VMBGP4PIR-20",
+        "VMBPSUMNGR-20",
     ],
 )
 class ModuleStatusMessage2(Message):

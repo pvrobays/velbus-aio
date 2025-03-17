@@ -56,6 +56,8 @@ from velbusaio.messages.module_status_request import ModuleStatusRequestMessage
 from velbusaio.messages.module_subtype import ModuleSubTypeMessage
 from velbusaio.messages.module_type import ModuleType2Message, ModuleTypeMessage
 from velbusaio.messages.module_type_request import ModuleTypeRequestMessage
+from velbusaio.messages.psu_load import PsuLoadMessage
+from velbusaio.messages.psu_values import PsuValuesMessage
 from velbusaio.messages.push_button_status import PushButtonStatusMessage
 from velbusaio.messages.raw import MeteoRawMessage, SensorRawMessage
 from velbusaio.messages.read_data_block_from_memory import (
