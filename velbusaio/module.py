@@ -69,6 +69,7 @@ from velbusaio.messages.channel_name_request import (
 from velbusaio.messages.clear_led import ClearLedMessage
 from velbusaio.messages.counter_status import CounterStatusMessage
 from velbusaio.messages.counter_status_request import CounterStatusRequestMessage
+from velbusaio.messages.counter_value import CounterValueMessage
 from velbusaio.messages.dali_device_settings import DaliDeviceSettingMsg
 from velbusaio.messages.dali_device_settings import DeviceType as DaliDeviceType
 from velbusaio.messages.dali_device_settings import DeviceTypeMsg as DaliDeviceTypeMsg
@@ -544,6 +545,10 @@ class Module:
         elif isinstance(message, SensorRawMessage):
             await self._update_channel(
                 message.sensor, {"cur": message.value, "unit": message.unit}
+            )
+        elif isinstance(message, CounterValueMessage):
+            await self._update_channel(
+                message.channel, {"power": message.power, "energy": message.energy}
             )
 
     async def _update_channel(self, channel: int, updates: dict):
