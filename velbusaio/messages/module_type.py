@@ -148,7 +148,7 @@ class ModuleTypeMessage(Message):
         "VMBGPO-20",
         "VMBEL4PIR-20",
         "VMBGP4PIR-20",
-        "VMBLEDPWM-20",
+        "VMB4LEDPWM-20",
         "VMB8IN-20",
         "VMB8DC-20",
         "VMB8PB-20",
