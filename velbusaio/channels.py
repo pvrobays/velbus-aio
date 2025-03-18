@@ -379,6 +379,8 @@ class ButtonCounter(Button):
     _pulses = None
     _counter = None
     _delay = None
+    _power = None
+    _energy = None
 
     def get_categories(self) -> list[str]:
         if self._counter:
@@ -391,11 +393,13 @@ class ButtonCounter(Button):
         return False
 
     def get_state(self) -> int:
-        val = 0
+        if self._energy:
+            return self._energy
         # if we don't know the delay
         # or we don't know the unit
         # or the delay is the max value
         #   we always return 0
+        val = 0
         if not self._delay or not self._Unit or self._delay == 0xFFFF:
             return round(0, 2)
         if self._Unit == VOLUME_LITERS_HOUR:
@@ -418,6 +422,8 @@ class ButtonCounter(Button):
         return None
 
     def get_counter_state(self) -> int:
+        if self._power:
+            return self._power
         return round((self._counter / self._pulses), 2)
 
     def get_counter_unit(self) -> str:
