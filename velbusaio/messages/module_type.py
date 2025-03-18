@@ -151,8 +151,6 @@ class ModuleTypeMessage(Message):
         "VMB4LEDPWM-20",
         "VMB8IN-20",
         "VMB8DC-20",
-        "VMB6PB-20",
-        "VMB8PIR-20",
     ],
 )
 class ModuleType2Message(Message):
