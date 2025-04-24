@@ -18,7 +18,7 @@ async def main(connect_str: str):
     # velbus = Velbus(dsn=connect_str)
     velbus = VelbusFast(destination=connect_str)
     cache_dir = velbus.get_cache_dir()
-    print("Cache dir: {}".format(cache_dir))
+    print(f"Cache dir: {cache_dir}")
 
     await velbus.connect()
     await velbus.start()

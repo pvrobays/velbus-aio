@@ -50,7 +50,7 @@ class PacketHandlerFast:
         self._modulescan_address = 0
         self._scan_complete = False
         self._scan_delay_msec = 0
-        self.__scan_found_addresses: Dict[int, ModuleTypeMessage | None] | None = None
+        self.__scan_found_addresses: dict[int, ModuleTypeMessage | None] | None = None
 
     async def read_protocol_data(self):
         if sys.version_info >= (3, 13):
@@ -91,7 +91,7 @@ class PacketHandlerFast:
         # TODO PJ: make sure only one scan can happen at a time
 
         # max_address = 32
-        max_address = 255 # TODO PJ: set this again
+        max_address = 255  # TODO PJ: set this again
 
         self._log.info("Sending scan type requests to all addresses...")
         self.__scan_found_addresses = {}
@@ -100,28 +100,38 @@ class PacketHandlerFast:
             await self._velbus.sendTypeRequestMessage(address)
 
         await self._velbus.wait_on_all_messages_sent_async()
-        self._log.info("Sent scan type requests to all addresses. Going to wait for responses...")
+        self._log.info(
+            "Sent scan type requests to all addresses. Going to wait for responses..."
+        )
 
         await asyncio.sleep(SCAN_MODULETYPE_TIMEOUT / 1000)  # wait for responses
 
         self._log.info("Waiting for responses done. Going to check for responses...")
         for address in range(1, max_address):
-            module_type_message: ModuleTypeMessage | None = self.__scan_found_addresses[address]
-            module:  Module | None = None
+            module_type_message: ModuleTypeMessage | None = self.__scan_found_addresses[
+                address
+            ]
+            module: Module | None = None
             if module_type_message is None:
-                self._log.info(f"No module found at address {address} ({address:#02x}). Skipping it.")
+                self._log.info(
+                    f"No module found at address {address} ({address:#02x}). Skipping it."
+                )
                 continue
 
-            self._log.info(f"Found module at address {address} ({address:#02x}): {module_type_message.module_name()}")
+            self._log.info(
+                f"Found module at address {address} ({address:#02x}): {module_type_message.module_name()}"
+            )
             cache_file = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
             # check if cached file module type is the same?
-            #self._log.debug(f"Found module at address {address} ({address:#02x}). Reading from cache...")
+            # self._log.debug(f"Found module at address {address} ({address:#02x}). Reading from cache...")
             await self._handle_module_type(module_type_message)
             # check if it has same module type
             module = self._velbus.get_module(address)
 
             if module is None:
-                self._log.info(f"Module at address {address} ({address:#02x}) could not be loaded. Skipping it.")
+                self._log.info(
+                    f"Module at address {address} ({address:#02x}) could not be loaded. Skipping it."
+                )
                 continue
 
             try:
@@ -133,9 +143,7 @@ class PacketHandlerFast:
                     SCAN_MODULEINFO_TIMEOUT_INITIAL / 1000.0,
                 )
                 self._scan_delay_msec = module.get_initial_timeout()
-                while (
-                    self._scan_delay_msec > 50 and not await module.is_loaded()
-                ):
+                while self._scan_delay_msec > 50 and not await module.is_loaded():
                     # self._log.debug(
                     #    f"\t... waiting {self._scan_delay_msec} is_loaded={await module.is_loaded()}"
                     # )
@@ -148,9 +156,6 @@ class PacketHandlerFast:
                 self._log.error(
                     f"Module {address} did not respond to info requests after successful type request"
                 )
-
-
-
 
         # if reload_cache:
         #     self._modulescan_address = 0
@@ -240,14 +245,17 @@ class PacketHandlerFast:
         address = rawmsg.address
 
         if self.__scan_found_addresses is None:
-            self._log.warning(f"Received module type response for address {address} ({address:#02x}) but no scan in progress")
+            self._log.warning(
+                f"Received module type response for address {address} ({address:#02x}) but no scan in progress"
+            )
             return
 
         tmsg: ModuleTypeMessage = ModuleTypeMessage()
         tmsg.populate(rawmsg.priority, address, rawmsg.rtr, rawmsg.data_only)
-        self._log.debug(f"A '{tmsg.module_name()}' ({tmsg.module_type:#02x}) lives on address {address} ({address:#02x})")
+        self._log.debug(
+            f"A '{tmsg.module_name()}' ({tmsg.module_type:#02x}) lives on address {address} ({address:#02x})"
+        )
         self.__scan_found_addresses[address] = tmsg
-
 
     async def handle(self, rawmsg: RawMessage) -> None:
         """

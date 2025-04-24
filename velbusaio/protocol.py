@@ -191,14 +191,18 @@ class VelbusProtocol(asyncio.BufferedProtocol):
                 while not message_sent:
                     message_sent = await self._write_message(msg_info)
                 send_time = time.perf_counter() - start_time
-                self._send_queue.task_done() # indicate that the item of the queue has been processed
+                self._send_queue.task_done()  # indicate that the item of the queue has been processed
                 if msg_info.command == 0xEF:
                     # 'channel name request' command provokes in worst case 99 answer packets from VMBGPOD
-                    queue_sleep_time = SLEEP_TIME * 33 # TODO make this adaptable on module_type
+                    queue_sleep_time = (
+                        SLEEP_TIME * 33
+                    )  # TODO make this adaptable on module_type
                 else:
                     queue_sleep_time = SLEEP_TIME
                 if msg_info.rtr:
-                    queue_sleep_time = 60 / 1000 # this is a scan command. We could be quicker?
+                    queue_sleep_time = (
+                        60 / 1000
+                    )  # this is a scan command. We could be quicker?
                 if send_time > queue_sleep_time:
                     queue_sleep_time = 0
                 else:
