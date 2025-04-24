@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import binascii
 import logging
+import time
 import typing as t
 from asyncio import transports
 
@@ -180,19 +181,29 @@ class VelbusProtocol(asyncio.BufferedProtocol):
         await self._write_transport_lock.acquire()
         while self._restart_writer:
             # wait for an item from the queue
-            msg_info = await self._send_queue.get()
+            msg_info: RawMessage | None = await self._send_queue.get()
             if msg_info is None:
                 self._restart_writer = False
                 return
             message_sent = False
             try:
+                start_time = time.perf_counter()
                 while not message_sent:
                     message_sent = await self._write_message(msg_info)
+                send_time = time.perf_counter() - start_time
+                self._send_queue.task_done() # indicate that the item of the queue has been processed
                 if msg_info.command == 0xEF:
                     # 'channel name request' command provokes in worst case 99 answer packets from VMBGPOD
-                    queue_sleep_time = SLEEP_TIME * 33
+                    queue_sleep_time = SLEEP_TIME * 33 # TODO make this adaptable on module_type
                 else:
                     queue_sleep_time = SLEEP_TIME
+                if msg_info.rtr:
+                    queue_sleep_time = 60 / 1000 # this is a scan command. We could be quicker?
+                if send_time > queue_sleep_time:
+                    queue_sleep_time = 0
+                else:
+                    queue_sleep_time = queue_sleep_time - send_time
+
                 await asyncio.sleep(queue_sleep_time)
             except (asyncio.CancelledError, GeneratorExit) as exc:
                 if not self._closing:
@@ -218,3 +229,7 @@ class VelbusProtocol(asyncio.BufferedProtocol):
             return True
         else:
             return False
+
+    async def wait_on_all_messages_sent_async(self) -> None:
+        self._log.debug("Waiting on all messages sent")
+        await self._send_queue.join()

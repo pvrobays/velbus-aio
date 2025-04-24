@@ -191,7 +191,7 @@ class PacketHandler:
                     self._log.debug(
                         f"Unexpected module type message module address {address}, Velbuslink scan?"
                     )
-                    self._modulescan_address = address - 1
+                    self._modulescan_address = address - 1 # This will create infinite loops when responses are timed out!!
 
             self._typeResponseReceived.set()
 
