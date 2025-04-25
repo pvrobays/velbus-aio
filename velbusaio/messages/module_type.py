@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import struct
 
-from velbusaio.command_registry import register, MODULE_DIRECTORY
+from velbusaio.command_registry import MODULE_DIRECTORY, register
 from velbusaio.message import Message
 
 COMMAND_CODE = 0xFF
