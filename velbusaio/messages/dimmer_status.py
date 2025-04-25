@@ -25,7 +25,7 @@ LED_FAST_BLINKING = 1 << 5
 LED_VERY_FAST_BLINKING = 1 << 4
 
 
-@register(COMMAND_CODE, ["VMB1DM", "VMBDME", "VMB1LED"])
+@register(COMMAND_CODE, ["VMB1DM", "VMBDME", "VMB1LED", "VMBDALI", "VMBDALI-20"])
 class DimmerStatusMessage(Message):
     """
     sent by: VMBDME
