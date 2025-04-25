@@ -45,10 +45,10 @@ class Velbus:
     """A velbus controller."""
 
     def __init__(
-            self,
-            dsn: str,
-            cache_dir: str = get_cache_dir(),
-            one_address: int | None = None,
+        self,
+        dsn: str,
+        cache_dir: str = get_cache_dir(),
+        one_address: int | None = None,
     ) -> None:
         """Init the Velbus controller."""
         self._log = logging.getLogger("velbus")
@@ -83,13 +83,13 @@ class Velbus:
             asyncio.ensure_future(self.connect())
 
     async def add_module(
-            self,
-            addr: int,
-            typ: int,
-            serial: int | None = None,
-            memorymap: int | None = None,
-            build_year: int | None = None,
-            build_week: int | None = None,
+        self,
+        addr: int,
+        typ: int,
+        serial: int | None = None,
+        memorymap: int | None = None,
+        build_year: int | None = None,
+        build_week: int | None = None,
     ) -> None:
         """Add a found module to the module cache."""
         module = Module.factory(
@@ -215,7 +215,7 @@ class Velbus:
         )
 
     def get_all_sensor(
-            self,
+        self,
     ) -> list[ButtonCounter | Temperature | LightSensor | SensorNumber]:
         return self._get_all("sensor")
 
@@ -244,7 +244,7 @@ class Velbus:
         return self._get_all("led")
 
     def _get_all(
-            self, class_name: str
+        self, class_name: str
     ) -> list[
         Blind
         | Button
@@ -259,7 +259,7 @@ class Velbus:
         | EdgeLit
         | Memo
         | SelectedProgram
-        ]:
+    ]:
         """Get all channels."""
         lst = []
         for addr, mod in (self.get_modules()).items():
