@@ -11,9 +11,8 @@ import json
 import logging
 import os
 import pathlib
-import pprint
 import sys
-from typing import TYPE_CHECKING, Awaitable, Callable
+from typing import TYPE_CHECKING
 
 from aiofile import async_open
 
@@ -23,10 +22,9 @@ from velbusaio.const import (
     SCAN_MODULEINFO_TIMEOUT_INTERVAL,
     SCAN_MODULETYPE_TIMEOUT,
 )
-from velbusaio.helpers import h2, keys_exists
-from velbusaio.message import Message
 from velbusaio.messages.module_subtype import ModuleSubTypeMessage
 from velbusaio.messages.module_type import ModuleType2Message, ModuleTypeMessage
+from velbusaio.module import Module
 from velbusaio.raw_message import RawMessage
 
 if TYPE_CHECKING:
@@ -35,7 +33,7 @@ if TYPE_CHECKING:
 
 class PacketHandler:
     """
-    The packetHandler class
+    The PacketHandler class
     """
 
     def __init__(
@@ -52,6 +50,7 @@ class PacketHandler:
         self._modulescan_address = 0
         self._scan_complete = False
         self._scan_delay_msec = 0
+        self.__scan_found_addresses: dict[int, ModuleTypeMessage | None] | None = None
 
     async def read_protocol_data(self):
         if sys.version_info >= (3, 13):
@@ -85,84 +84,178 @@ class PacketHandler:
         return False
 
     async def scan(self, reload_cache: bool = False) -> None:
-        if reload_cache:
-            self._modulescan_address = 0
-            self._scan_complete = False
-        # non-blocking check to see if the cache_dir is empty
-        loop = asyncio.get_running_loop()
-        if not reload_cache and await loop.run_in_executor(None, self.empty_cache):
-            self._log.info("No cache yet, so forcing a bus scan")
-            reload_cache = True
-        self._log.info("Start module scan")
-        while self._modulescan_address < 254:
-            address = 0
-            module = None
-            async with self._scanLock:
-                self._modulescan_address = self._modulescan_address + 1
-                address = self._modulescan_address
-                if self._velbus.addr_is_submodule(address):
-                    self._log.info(
-                        f"Skipping submodule address {address}, already handled"
-                    )
-                    continue
-                self._log.info(f"Starting handling scan {address}")
-                module = self._velbus.get_module(address)
 
-            if self._one_address is not None and address != int(self._one_address):
+        # self._scan_complete = False
+        # TODO PJ: do all special cases e.g. single address scan
+        # TODO PJ: check if we need to reload the cache
+        # TODO PJ: make sure only one scan can happen at a time
+
+        # max_address = 32
+        max_address = 255  # TODO PJ: set this again
+
+        self._log.info("Sending scan type requests to all addresses...")
+        self.__scan_found_addresses = {}
+        for address in range(1, max_address):
+            self.__scan_found_addresses[address] = None
+            await self._velbus.sendTypeRequestMessage(address)
+
+        await self._velbus.wait_on_all_messages_sent_async()
+        self._log.info(
+            "Sent scan type requests to all addresses. Going to wait for responses..."
+        )
+
+        await asyncio.sleep(SCAN_MODULETYPE_TIMEOUT / 1000)  # wait for responses
+
+        self._log.info("Waiting for responses done. Going to check for responses...")
+        for address in range(1, max_address):
+            module_type_message: ModuleTypeMessage | None = self.__scan_found_addresses[
+                address
+            ]
+            module: Module | None = None
+            if module_type_message is None:
                 self._log.info(
-                    f"Skipping address {address} as we requested to only scan one address {self._one_address}"
+                    f"No module found at address {address} ({address:#02x}). Skipping it."
                 )
                 continue
 
-            cfile = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
-            # cleanup the old module cache if needed
-            scanModule = reload_cache
-            if scanModule and os.path.isfile(cfile):
-                os.remove(cfile)
-            elif os.path.isfile(cfile):
-                scanModule = os.path.isfile(cfile)
-            if scanModule:
-                try:
-                    self._log.info(f"Starting scan {address}")
-                    self._typeResponseReceived.clear()
-                    await self._velbus.sendTypeRequestMessage(address)
-                    await asyncio.wait_for(
-                        self._typeResponseReceived.wait(),
-                        SCAN_MODULETYPE_TIMEOUT / 1000.0,
-                    )
-                    async with self._scanLock:
-                        module = self._velbus.get_module(address)
-                except asyncio.TimeoutError:
-                    self._log.info(
-                        f"Scan module {address} failed: not present or unavailable"
-                    )
-                if module is not None:
-                    try:
-                        self._log.debug(
-                            f"Module {module._address} detected: start loading"
-                        )
-                        await asyncio.wait_for(
-                            module.load(from_cache=True),
-                            SCAN_MODULEINFO_TIMEOUT_INITIAL / 1000.0,
-                        )
-                        self._scan_delay_msec = module.get_initial_timeout()
-                        while (
-                            self._scan_delay_msec > 50 and not await module.is_loaded()
-                        ):
-                            # self._log.debug(
-                            #    f"\t... waiting {self._scan_delay_msec} is_loaded={await module.is_loaded()}"
-                            # )
-                            self._scan_delay_msec = self._scan_delay_msec - 50
-                            await asyncio.sleep(0.05)
-                        self._log.info(
-                            f"Scan module {address} completed, module loaded={await module.is_loaded()}"
-                        )
-                    except asyncio.TimeoutError:
-                        self._log.error(
-                            f"Module {address} did not respond to info requests after successful type request"
-                        )
+            self._log.info(
+                f"Found module at address {address} ({address:#02x}): {module_type_message.module_name()}"
+            )
+            cache_file = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
+            # check if cached file module type is the same?
+            # self._log.debug(f"Found module at address {address} ({address:#02x}). Reading from cache...")
+            await self._handle_module_type(module_type_message)
+            # check if it has same module type
+            module = self._velbus.get_module(address)
+
+            if module is None:
+                self._log.info(
+                    f"Module at address {address} ({address:#02x}) could not be loaded. Skipping it."
+                )
+                continue
+
+            try:
+                self._log.debug(
+                    f"Module {module.get_address()} ({module.get_address():#02x}) detected: start loading"
+                )
+                await asyncio.wait_for(
+                    module.load(from_cache=True),
+                    SCAN_MODULEINFO_TIMEOUT_INITIAL / 1000.0,
+                )
+                self._scan_delay_msec = module.get_initial_timeout()
+                while self._scan_delay_msec > 50 and not await module.is_loaded():
+                    # self._log.debug(
+                    #    f"\t... waiting {self._scan_delay_msec} is_loaded={await module.is_loaded()}"
+                    # )
+                    self._scan_delay_msec = self._scan_delay_msec - 50
+                    await asyncio.sleep(0.05)
+                self._log.info(
+                    f"Scan module {address} completed, module loaded={await module.is_loaded()}"
+                )
+            except asyncio.TimeoutError:
+                self._log.error(
+                    f"Module {address} did not respond to info requests after successful type request"
+                )
+
+        # if reload_cache:
+        #     self._modulescan_address = 0
+        #     self._scan_complete = False
+        # # non-blocking check to see if the cache_dir is empty
+        # loop = asyncio.get_running_loop()
+        # if not reload_cache and await loop.run_in_executor(None, self.empty_cache):
+        #     self._log.info("No cache yet, so forcing a bus scan")
+        #     reload_cache = True
+        # self._log.info("Start module scan")
+        # while self._modulescan_address < 254:
+        #     address = 0
+        #     module = None
+        #     async with self._scanLock:
+        #         self._modulescan_address = self._modulescan_address + 1
+        #         address = self._modulescan_address
+        #         if self._velbus.addr_is_submodule(address):
+        #             self._log.info(
+        #                 f"Skipping submodule address {address}, already handled"
+        #             )
+        #             continue
+        #         self._log.info(f"Starting handling scan {address}")
+        #         module = self._velbus.get_module(address)
+        #
+        #     if self._one_address is not None and address != int(self._one_address):
+        #         self._log.info(
+        #             f"Skipping address {address} as we requested to only scan one address {self._one_address}"
+        #         )
+        #         continue
+        #
+        #     cfile = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
+        #     # cleanup the old module cache if needed
+        #     is_scan_module = reload_cache
+        #     if is_scan_module and os.path.isfile(cfile):
+        #         os.remove(cfile)
+        #     elif not os.path.isfile(cfile):
+        #         is_scan_module = True # Do scan if cache file does not exist
+        #     if is_scan_module:
+        #         try:
+        #             self._log.info(f"Starting scan {address}")
+        #             self._typeResponseReceived.clear()
+        #             await self._velbus.sendTypeRequestMessage(address)
+        #             await asyncio.wait_for(
+        #                 self._typeResponseReceived.wait(),
+        #                 SCAN_MODULETYPE_TIMEOUT / 1000.0,
+        #                 # 30 # 30s timeout for type request
+        #             )
+        #             async with self._scanLock:
+        #                 module = self._velbus.get_module(address)
+        #         except asyncio.TimeoutError:
+        #             self._log.info(
+        #                 f"Scan module {address} failed: not present or unavailable"
+        #             )
+        #         if module is not None:
+        #             try:
+        #                 self._log.debug(
+        #                     f"Module {module._address} detected: start loading"
+        #                 )
+        #                 await asyncio.wait_for(
+        #                     module.load(from_cache=True),
+        #                     SCAN_MODULEINFO_TIMEOUT_INITIAL / 1000.0,
+        #                 )
+        #                 self._scan_delay_msec = module.get_initial_timeout()
+        #                 while (
+        #                     self._scan_delay_msec > 50 and not await module.is_loaded()
+        #                 ):
+        #                     # self._log.debug(
+        #                     #    f"\t... waiting {self._scan_delay_msec} is_loaded={await module.is_loaded()}"
+        #                     # )
+        #                     self._scan_delay_msec = self._scan_delay_msec - 50
+        #                     await asyncio.sleep(0.05)
+        #                 self._log.info(
+        #                     f"Scan module {address} completed, module loaded={await module.is_loaded()}"
+        #                 )
+        #             except asyncio.TimeoutError:
+        #                 self._log.error(
+        #                     f"Module {address} did not respond to info requests after successful type request"
+        #                 )
+
         self._scan_complete = True
         self._log.info("Module scan completed")
+
+    async def __handle_module_type_response_async(self, rawmsg: RawMessage) -> None:
+        """
+        Handle a received module type response packet
+        """
+        address = rawmsg.address
+
+        if self.__scan_found_addresses is None:
+            self._log.warning(
+                f"Received module type response for address {address} ({address:#02x}) but no scan in progress"
+            )
+            return
+
+        tmsg: ModuleTypeMessage = ModuleTypeMessage()
+        tmsg.populate(rawmsg.priority, address, rawmsg.rtr, rawmsg.data_only)
+        self._log.debug(
+            f"A '{tmsg.module_name()}' ({tmsg.module_type:#02x}) lives on address {address} ({address:#02x})"
+        )
+        self.__scan_found_addresses[address] = tmsg
 
     async def handle(self, rawmsg: RawMessage) -> None:
         """
@@ -180,22 +273,22 @@ class PacketHandler:
         data = rawmsg.data_only
 
         # handle module type response message
-        if command_value == 0xFF and not self._scan_complete:
-            tmsg: ModuleTypeMessage = ModuleTypeMessage()
-            tmsg.populate(priority, address, rtr, data)
-            async with self._scanLock:
-                await self._handle_module_type(tmsg)
-                if address == self._modulescan_address:
-                    self._typeResponseReceived.set()
-                else:
-                    self._log.debug(
-                        f"Unexpected module type message module address {address}, Velbuslink scan?"
-                    )
-                    self._modulescan_address = (
-                        address - 1
-                    )  # This will create infinite loops when responses are timed out!!
-
-            self._typeResponseReceived.set()
+        if command_value == 0xFF:
+            await self.__handle_module_type_response_async(rawmsg)
+        # if command_value == 0xFF and not self._scan_complete:
+        #     tmsg: ModuleTypeMessage = ModuleTypeMessage()
+        #     tmsg.populate(priority, address, rtr, data)
+        #     async with self._scanLock:
+        #         await self._handle_module_type(tmsg)
+        #         if address == self._modulescan_address:
+        #             self._typeResponseReceived.set()
+        #         else:
+        #             self._log.debug(
+        #                 f"Unexpected module type message module address {address}, Velbuslink scan?"
+        #             )
+        #             self._modulescan_address = address - 1 # This will create infinite loops when responses are timed out!!
+        #
+        #     self._typeResponseReceived.set()
 
         # handle module subtype response message
         elif command_value in (0xB0, 0xA7, 0xA6) and not self._scan_complete:

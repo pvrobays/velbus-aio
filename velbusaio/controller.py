@@ -17,7 +17,6 @@ from velbusaio.channels import (
     Blind,
     Button,
     ButtonCounter,
-    Channel,
     Dimmer,
     EdgeLit,
     LightSensor,
@@ -46,10 +45,10 @@ class Velbus:
     """A velbus controller."""
 
     def __init__(
-        self,
-        dsn: str,
-        cache_dir: str = get_cache_dir(),
-        one_address: int | None = None,
+            self,
+            dsn: str,
+            cache_dir: str = get_cache_dir(),
+            one_address: int | None = None,
     ) -> None:
         """Init the Velbus controller."""
         self._log = logging.getLogger("velbus")
@@ -61,7 +60,7 @@ class Velbus:
         self._closing = False
         self._auto_reconnect = True
 
-        self._dsn = dsn
+        self._destination = dsn
         self._handler = PacketHandler(self, one_address)
         self._modules: dict[int, Module] = {}
         self._submodules: list[int] = []
@@ -84,13 +83,13 @@ class Velbus:
             asyncio.ensure_future(self.connect())
 
     async def add_module(
-        self,
-        addr: int,
-        typ: int,
-        serial: int | None = None,
-        memorymap: int | None = None,
-        build_year: int | None = None,
-        build_week: int | None = None,
+            self,
+            addr: int,
+            typ: int,
+            serial: int | None = None,
+            memorymap: int | None = None,
+            build_year: int | None = None,
+            build_week: int | None = None,
     ) -> None:
         """Add a found module to the module cache."""
         module = Module.factory(
@@ -146,12 +145,12 @@ class Velbus:
         """Connect to the bus and load all the data."""
         await self._handler.read_protocol_data()
         # connect to the bus
-        if ":" in self._dsn:
+        if ":" in self._destination:
             # tcp/ip combination
-            if not re.search(r"^[A-Za-z0-9+.\-]+://", self._dsn):
+            if not re.search(r"^[A-Za-z0-9+.\-]+://", self._destination):
                 # if no scheme, then add the tcp://
-                self._dsn = f"tcp://{self._dsn}"
-            parts = urlparse(self._dsn)
+                self._destination = f"tcp://{self._destination}"
+            parts = urlparse(self._destination)
             if parts.scheme == "tls":
                 ctx = ssl._create_unverified_context()
             else:
@@ -176,7 +175,7 @@ class Velbus:
                     await serial_asyncio_fast.create_serial_connection(
                         asyncio.get_event_loop(),
                         lambda: self._protocol,
-                        url=self._dsn,
+                        url=self._destination,
                         baudrate=38400,
                         bytesize=serial.EIGHTBITS,
                         parity=serial.PARITY_NONE,
@@ -190,7 +189,7 @@ class Velbus:
 
     async def start(self) -> None:
         # if auth is required send the auth key
-        parts = urlparse(self._dsn)
+        parts = urlparse(self._destination)
         if parts.username:
             await self._protocol.write_auth_key(parts.username)
         # scan the bus
@@ -216,7 +215,7 @@ class Velbus:
         )
 
     def get_all_sensor(
-        self,
+            self,
     ) -> list[ButtonCounter | Temperature | LightSensor | SensorNumber]:
         return self._get_all("sensor")
 
@@ -245,7 +244,7 @@ class Velbus:
         return self._get_all("led")
 
     def _get_all(
-        self, class_name: str
+            self, class_name: str
     ) -> list[
         Blind
         | Button
@@ -260,7 +259,7 @@ class Velbus:
         | EdgeLit
         | Memo
         | SelectedProgram
-    ]:
+        ]:
         """Get all channels."""
         lst = []
         for addr, mod in (self.get_modules()).items():
@@ -277,3 +276,7 @@ class Velbus:
         await self.send(SetRealtimeClock(wday=lclt[6], hour=lclt[3], min=lclt[4]))
         await self.send(SetDate(day=lclt[2], mon=lclt[1], year=lclt[0]))
         await self.send(SetDaylightSaving(ds=not lclt[8]))
+
+    async def wait_on_all_messages_sent_async(self) -> None:
+        """Wait for all messages to be sent."""
+        await self._protocol.wait_on_all_messages_sent_async()
