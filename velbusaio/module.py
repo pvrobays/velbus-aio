@@ -243,6 +243,9 @@ class Module:
             d["channels"][num] = chan.to_cache()
         return d
 
+    def get_address(self) -> int:
+        return self._address
+
     def get_addresses(self) -> list:
         """
         Get all addresses for this module

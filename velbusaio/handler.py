@@ -139,7 +139,7 @@ class PacketHandler:
                 if module is not None:
                     try:
                         self._log.debug(
-                            f"Module {module._address} detected: start loading"
+                            f"Module {module.get_address()} detected: start loading"
                         )
                         await asyncio.wait_for(
                             module.load(from_cache=True),
