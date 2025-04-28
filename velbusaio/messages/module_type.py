@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import struct
 
-from velbusaio.command_registry import register
+from velbusaio.command_registry import MODULE_DIRECTORY, register
 from velbusaio.message import Message
 
 COMMAND_CODE = 0xFF
@@ -110,11 +110,15 @@ class ModuleTypeMessage(Message):
         self.build_week = 0
         self.set_defaults(address)
 
-    def module_name(self) -> str:
+    def module_type_name(self) -> str:
         """
         :return: str
         """
-        return "Unknown"
+        return (
+            MODULE_DIRECTORY[self.module_type]
+            if self.module_type in MODULE_DIRECTORY
+            else "Unknown"
+        )
 
     def populate(self, priority, address, rtr, data) -> None:
         """
