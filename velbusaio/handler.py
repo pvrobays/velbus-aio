@@ -95,7 +95,7 @@ class PacketHandler:
 
         self._log.info("Start module scan")
         async with self._scanLock:
-            _scan_complete = False
+            self._scan_complete = False
 
             self._log.debug("Waiting for Velbus bus to be ready to scan...")
             await self._velbus.wait_on_all_messages_sent_async() # don't start a scan while messages are still in the queue
@@ -134,7 +134,7 @@ class PacketHandler:
                 self._log.info(
                     f"Found module at address {address} ({address:#02x}): {module_type_message.module_name()}"
                 )
-                cache_file = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
+                # cache_file = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
                 # TODO: check if cached file module type is the same?
                 await self._handle_module_type(module_type_message)
                 async with self._scanLock:
