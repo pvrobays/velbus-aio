@@ -209,20 +209,6 @@ class PacketHandler:
         # handle module type response message
         if command_value == 0xFF:
             await self.__handle_module_type_response_async(rawmsg)
-        # if command_value == 0xFF and not self._scan_complete:
-        #     tmsg: ModuleTypeMessage = ModuleTypeMessage()
-        #     tmsg.populate(priority, address, rtr, data)
-        #     async with self._scanLock:
-        #         await self._handle_module_type(tmsg)
-        #         if address == self._modulescan_address:
-        #             self._typeResponseReceived.set()
-        #         else:
-        #             self._log.debug(
-        #                 f"Unexpected module type message module address {address}, Velbuslink scan?"
-        #             )
-        #             self._modulescan_address = address - 1 # This will create infinite loops when responses are timed out!!
-        #
-        #     self._typeResponseReceived.set()
 
         # handle module subtype response message
         elif command_value in (0xB0, 0xA7, 0xA6) and not self._scan_complete:
