@@ -138,9 +138,7 @@ class PacketHandler:
                 self._log.info(
                     f"Found module at address {address} ({address:#02x}): {module_type_message.module_name()}"
                 )
-                # cache_file = pathlib.Path(
-                    f"{self._velbus.get_cache_dir()}/{address}.json"
-                )
+                # cache_file = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
                 # TODO: check if cached file module type is the same?
                 await self._handle_module_type(module_type_message)
                 async with self._scanLock:
