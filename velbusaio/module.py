@@ -246,6 +246,9 @@ class Module:
             d["channels"][num] = chan.to_cache()
         return d
 
+    def get_address(self) -> int:
+        return self._address
+
     def get_addresses(self) -> list:
         """
         Get all addresses for this module
@@ -793,6 +796,8 @@ class Module:
                     "ThermostatAddr" in self._data and self._data["ThermostatAddr"] != 0
                 ):
                     await self._update_channel(int(chan), {"thermostat": True})
+            if chan_data["Type"] == "Dimmer" and "sliderScale" in self._data:
+                self._channels[int(chan)].slider_scale = self._data["sliderScale"]
 
 
 class VmbDali(Module):

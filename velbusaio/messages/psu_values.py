@@ -10,9 +10,6 @@ from velbusaio.command_registry import register
 from velbusaio.message import Message
 
 COMMAND_CODE = 0xA3
-BALANCED = 0x01
-BOOST = 0x02
-BACKUP = 0x03
 
 
 @register(COMMAND_CODE, ["VMBPSUMNGR-20"])
@@ -20,10 +17,10 @@ class PsuValuesMessage(Message):
 
     def __init__(self, address=None):
         Message.__init__(self)
-        self.mode = 0
-        self.load_1 = 0
-        self.load_2 = 0
-        self.out = 0
+        self.channel = 0
+        self.watt = 0
+        self.volt = 0
+        self.amp = 0
 
     def populate(self, priority, address, rtr, data):
         """
@@ -33,10 +30,10 @@ class PsuValuesMessage(Message):
         self.needs_no_rtr(rtr)
         self.needs_data(data, 3)
         self.set_attributes(priority, address, rtr)
-        self.mode = data[0]
-        self.load_1 = data[1]
-        self.load_2 = data[2]
-        self.out = data[3]
+        self.channel = (data[0] & 0xF0) >> 4
+        self.watt = ((data[0] & 0x0F) << 16 | data[1] << 8 | data[2]) / 1000
+        self.volt = (data[3] << 8 | data[4]) / 1000
+        self.amp = (data[5] << 8 | data[6]) / 1000
 
     def data_to_binary(self):
         """

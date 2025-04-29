@@ -110,7 +110,7 @@ class ModuleTypeMessage(Message):
         self.build_week = 0
         self.set_defaults(address)
 
-    def module_name(self) -> str:
+    def module_type_name(self) -> str:
         """
         :return: str
         """
