@@ -166,9 +166,6 @@ class Module:
         self._channels = {}
         self.loaded = False
 
-    def get_address(self) -> int:
-        return self._address
-
     def get_initial_timeout(self) -> int:
         return SCAN_MODULEINFO_TIMEOUT_INITIAL
 
