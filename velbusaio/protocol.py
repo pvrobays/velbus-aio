@@ -213,14 +213,14 @@ class VelbusProtocol(asyncio.BufferedProtocol):
         sleep_time = SLEEP_TIME
 
         if msg_info.rtr:
-            sleep_time = SLEEP_TIME # this is a scan command. We could be quicker?
+            sleep_time = SLEEP_TIME  # this is a scan command. We could be quicker?
 
         if msg_info.command == 0xEF:
             # 'channel name request' command provokes in worst case 99 answer packets from VMBGPOD
             sleep_time = SLEEP_TIME * 33  # TODO make this adaptable on module_type
 
         if send_time > sleep_time:
-            return 0 # no need to wait, we are already late
+            return 0  # no need to wait, we are already late
         else:
             return sleep_time - send_time
 
