@@ -191,24 +191,12 @@ class VelbusProtocol(asyncio.BufferedProtocol):
                 while not message_sent:
                     message_sent = await self._write_message(msg_info)
                 send_time = time.perf_counter() - start_time
-                self._send_queue.task_done()  # indicate that the item of the queue has been processed
-                if msg_info.command == 0xEF:
-                    # 'channel name request' command provokes in worst case 99 answer packets from VMBGPOD
-                    queue_sleep_time = (
-                        SLEEP_TIME * 33
-                    )  # TODO make this adaptable on module_type
-                else:
-                    queue_sleep_time = SLEEP_TIME
-                if msg_info.rtr:
-                    queue_sleep_time = (
-                        60 / 1000
-                    )  # this is a scan command. We could be quicker?
-                if send_time > queue_sleep_time:
-                    queue_sleep_time = 0
-                else:
-                    queue_sleep_time = queue_sleep_time - send_time
 
+                self._send_queue.task_done()  # indicate that the item of the queue has been processed
+
+                queue_sleep_time = self._calculate_queue_sleep_time(msg_info, send_time)
                 await asyncio.sleep(queue_sleep_time)
+
             except (asyncio.CancelledError, GeneratorExit) as exc:
                 if not self._closing:
                     self._log.error(f"Stopping Velbus writer due to {exc!r}")
@@ -219,6 +207,22 @@ class VelbusProtocol(asyncio.BufferedProtocol):
         if self._write_transport_lock.locked():
             self._write_transport_lock.release()
         self._log.debug("Ending Velbus write message from send queue")
+
+    @staticmethod
+    def _calculate_queue_sleep_time(msg_info, send_time):
+        sleep_time = SLEEP_TIME
+
+        if msg_info.rtr:
+            sleep_time = SLEEP_TIME # this is a scan command. We could be quicker?
+
+        if msg_info.command == 0xEF:
+            # 'channel name request' command provokes in worst case 99 answer packets from VMBGPOD
+            sleep_time = SLEEP_TIME * 33  # TODO make this adaptable on module_type
+
+        if send_time > sleep_time:
+            return 0 # no need to wait, we are already late
+        else:
+            return sleep_time - send_time
 
     @backoff.on_predicate(
         backoff.expo,
