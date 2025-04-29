@@ -98,7 +98,7 @@ class PacketHandler:
             self._scan_complete = False
 
             self._log.debug("Waiting for Velbus bus to be ready to scan...")
-            await self._velbus.wait_on_all_messages_sent_async() # don't start a scan while messages are still in the queue
+            await self._velbus.wait_on_all_messages_sent_async()  # don't start a scan while messages are still in the queue
             self._log.debug("Velbus bus is ready to scan!")
 
             self._log.info("Sending scan type requests to all addresses...")
@@ -106,7 +106,9 @@ class PacketHandler:
             for address in range(start_address, max_address + 1):
                 cfile = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
                 if reload_cache and os.path.isfile(cfile):
-                    self._log.info(f"Reloading cache for address {address} ({address:#02x})")
+                    self._log.info(
+                        f"Reloading cache for address {address} ({address:#02x})"
+                    )
                     os.remove(cfile)
 
                 self.__scan_found_addresses[address] = None
@@ -119,11 +121,13 @@ class PacketHandler:
 
             await asyncio.sleep(SCAN_MODULETYPE_TIMEOUT / 1000)  # wait for responses
 
-            self._log.info("Waiting for responses done. Going to check for responses...")
+            self._log.info(
+                "Waiting for responses done. Going to check for responses..."
+            )
             for address in range(1, max_address):
-                module_type_message: ModuleTypeMessage | None = self.__scan_found_addresses[
-                    address
-                ]
+                module_type_message: ModuleTypeMessage | None = (
+                    self.__scan_found_addresses[address]
+                )
                 module: Module | None = None
                 if module_type_message is None:
                     self._log.info(
@@ -134,7 +138,9 @@ class PacketHandler:
                 self._log.info(
                     f"Found module at address {address} ({address:#02x}): {module_type_message.module_name()}"
                 )
-                # cache_file = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
+                # cache_file = pathlib.Path(
+                    f"{self._velbus.get_cache_dir()}/{address}.json"
+                )
                 # TODO: check if cached file module type is the same?
                 await self._handle_module_type(module_type_message)
                 async with self._scanLock:
