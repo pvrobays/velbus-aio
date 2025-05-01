@@ -47,6 +47,7 @@ class PacketHandler:
         self._one_address = one_address
         self._typeResponseReceived = asyncio.Event()
         self._scanLock = asyncio.Lock()
+        self._fullScanLock = asyncio.Lock()
         self._modulescan_address = 0
         self._scan_complete = False
         self._scan_delay_msec = 0
@@ -85,7 +86,7 @@ class PacketHandler:
 
     async def scan(self, reload_cache: bool = False) -> None:
         start_address = 1
-        max_address = 254
+        max_address = 254 + 1
         if self._one_address is not None:
             start_address = self._one_address
             max_address = self._one_address + 1
@@ -94,7 +95,7 @@ class PacketHandler:
             )
 
         self._log.info("Start module scan")
-        async with self._scanLock:
+        async with self._fullScanLock:
             self._scan_complete = False
 
             self._log.debug("Waiting for Velbus bus to be ready to scan...")
@@ -112,7 +113,8 @@ class PacketHandler:
                     os.remove(cfile)
 
                 self.__scan_found_addresses[address] = None
-                await self._velbus.sendTypeRequestMessage(address)
+                async with self._scanLock:
+                    await self._velbus.sendTypeRequestMessage(address)
 
             await self._velbus.wait_on_all_messages_sent_async()
             self._log.info(
@@ -141,7 +143,8 @@ class PacketHandler:
                 # cache_file = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
                 # TODO: check if cached file module type is the same?
                 await self._handle_module_type(module_type_message)
-                module = self._velbus.get_module(address)
+                async with self._scanLock:
+                    module = self._velbus.get_module(address)
 
                 if module is None:
                     self._log.info(
