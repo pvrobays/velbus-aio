@@ -12,6 +12,7 @@ import logging
 import os
 import pathlib
 import sys
+import time
 from typing import TYPE_CHECKING
 
 from aiofile import async_open
@@ -96,6 +97,7 @@ class PacketHandler:
 
         self._log.info("Start module scan")
         async with self._fullScanLock:
+            start_time = time.perf_counter()
             self._scan_complete = False
 
             self._log.debug("Waiting for Velbus bus to be ready to scan...")
@@ -103,6 +105,7 @@ class PacketHandler:
             self._log.debug("Velbus bus is ready to scan!")
 
             self._log.info("Sending scan type requests to all addresses...")
+            start_scan_time = time.perf_counter()
             self.__scan_found_addresses = {}
             for address in range(start_address, max_address):
                 cfile = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
@@ -117,8 +120,9 @@ class PacketHandler:
                     await self._velbus.sendTypeRequestMessage(address)
 
             await self._velbus.wait_on_all_messages_sent_async()
+            scan_time = time.perf_counter() - start_scan_time
             self._log.info(
-                "Sent scan type requests to all addresses. Going to wait for responses..."
+                f"Sent scan type requests to all addresses in {scan_time:.2f}. Going to wait for responses..."
             )
 
             await asyncio.sleep(SCAN_MODULETYPE_TIMEOUT / 1000)  # wait for responses
@@ -127,6 +131,7 @@ class PacketHandler:
                 "Waiting for responses done. Going to check for responses..."
             )
             for address in range(start_address, max_address):
+                start_module_scan = time.perf_counter()
                 module_type_message: ModuleTypeMessage | None = (
                     self.__scan_found_addresses[address]
                 )
@@ -167,16 +172,18 @@ class PacketHandler:
                         # )
                         self._scan_delay_msec = self._scan_delay_msec - 50
                         await asyncio.sleep(0.05)
+                    module_scan_time = time.perf_counter() - start_module_scan
                     self._log.info(
-                        f"Scan module {address} completed, module loaded={await module.is_loaded()}"
+                        f"Scan module {address} ({address:#02x}, {module.get_type_name()}) completed in {module_scan_time:.2f}, module loaded={await module.is_loaded()}"
                     )
                 except asyncio.TimeoutError:
                     self._log.error(
-                        f"Module {address} did not respond to info requests after successful type request"
+                        f"Module {address} ({address:#02x}) did not respond to info requests after successful type request"
                     )
 
             self._scan_complete = True
-            self._log.info("Module scan completed")
+            total_time = time.perf_counter() - start_time
+            self._log.info(f"Module scan completed in {total_time:.2f} seconds")
 
     async def __handle_module_type_response_async(self, rawmsg: RawMessage) -> None:
         """
