@@ -103,7 +103,7 @@ class PacketHandler:
 
             self._log.info("Sending scan type requests to all addresses...")
             self.__scan_found_addresses = {}
-            for address in range(start_address, max_address + 1):
+            for address in range(start_address, max_address):
                 cfile = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
                 if reload_cache and os.path.isfile(cfile):
                     self._log.info(
@@ -124,7 +124,7 @@ class PacketHandler:
             self._log.info(
                 "Waiting for responses done. Going to check for responses..."
             )
-            for address in range(1, max_address):
+            for address in range(start_address, max_address):
                 module_type_message: ModuleTypeMessage | None = (
                     self.__scan_found_addresses[address]
                 )
@@ -136,13 +136,12 @@ class PacketHandler:
                     continue
 
                 self._log.info(
-                    f"Found module at address {address} ({address:#02x}): {module_type_message.module_name()}"
+                    f"Found module at address {address} ({address:#02x}): {module_type_message.module_type_name()}"
                 )
                 # cache_file = pathlib.Path(f"{self._velbus.get_cache_dir()}/{address}.json")
                 # TODO: check if cached file module type is the same?
                 await self._handle_module_type(module_type_message)
-                async with self._scanLock:
-                    module = self._velbus.get_module(address)
+                module = self._velbus.get_module(address)
 
                 if module is None:
                     self._log.info(
@@ -191,7 +190,7 @@ class PacketHandler:
         tmsg: ModuleTypeMessage = ModuleTypeMessage()
         tmsg.populate(rawmsg.priority, address, rawmsg.rtr, rawmsg.data_only)
         self._log.debug(
-            f"A '{tmsg.module_name()}' ({tmsg.module_type:#02x}) lives on address {address} ({address:#02x})"
+            f"A '{tmsg.module_type_name()}' ({tmsg.module_type:#02x}) lives on address {address} ({address:#02x})"
         )
         self.__scan_found_addresses[address] = tmsg
 
