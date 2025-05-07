@@ -137,7 +137,7 @@ class PacketHandler:
                 )
                 module: Module | None = None
                 if module_type_message is None:
-                    self._log.info(
+                    self._log.debug(
                         f"No module found at address {address} ({address:#02x}). Skipping it."
                     )
                     continue
