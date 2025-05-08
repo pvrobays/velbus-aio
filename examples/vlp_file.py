@@ -15,6 +15,7 @@ args = parser.parse_args()
 
 async def main(path: str):
     vlp = vlpFile(path)
+    await vlp.read()
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(vlp.get())
 
