@@ -9,7 +9,9 @@ class vlpFile:
         self._modules = {}
         self._read()
         self._parse()
-        print(self._modules)
+
+    def get(self) -> dict:
+        return self._modules
 
     def _read(self) -> None:
         with open(self._file_path) as file:
