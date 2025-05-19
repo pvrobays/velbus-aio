@@ -553,6 +553,10 @@ class Module:
             await self._update_channel(
                 message.channel, {"power": message.power, "energy": message.energy}
             )
+        elif isinstance(message, DimValueStatus):
+            for offset, dim_value in enumerate(message.dim_values):
+                channel = message.channel + offset
+                await self._update_channel(channel, {"state": dim_value})
 
     async def _update_channel(self, channel: int, updates: dict):
         try:
