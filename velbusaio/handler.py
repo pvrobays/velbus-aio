@@ -189,9 +189,9 @@ class PacketHandler:
                     self._typeResponseReceived.set()
                 else:
                     self._log.debug(
-                        f"Unexpected module type message module address {address}, Velbuslink scan?"
+                        f"Unexpected module type message for module scan {self._modulescan_address} from module address {address}, Velbuslink scan?"
                     )
-                    self._modulescan_address = address - 1
+                    self._modulescan_address = address - 1 #TODO PJ: This seems bad!
 
             self._typeResponseReceived.set()
 
