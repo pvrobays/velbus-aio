@@ -191,9 +191,6 @@ class PacketHandler:
                     self._log.debug(
                         f"Unexpected module type message for module scan {self._modulescan_address} from module address {address}, Velbuslink scan?"
                     )
-                    self._modulescan_address = address - 1 #TODO PJ: This seems bad!
-
-            self._typeResponseReceived.set()
 
         # handle module subtype response message
         elif command_value in (0xB0, 0xA7, 0xA6) and not self._scan_complete:
